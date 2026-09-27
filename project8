@@ -1,0 +1,180 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "fcd36ada-a6b2-49d2-b915-025e33702668",
+      "name": "매주 월요일 오전 9시",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1glPw9N8VpDl8YAPyyLnoaALhbE19Xd57DiQfCpj2fg0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "샘플데이터_주간업무실적.csv",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "2fe6c1fd-a1e8-41d0-86bf-dab2b77fda03",
+      "name": "구글시트_데이터읽기",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        176,
+        -144
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pPCgJgRs7nn74Udz",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "업무실적목록",
+        "options": {}
+      },
+      "id": "9e119c94-c860-44a4-9eb6-b606c87a193e",
+      "name": "데이터_하나로합치기",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "gwihyeog16@gmail.com",
+        "subject": "={{'[주간 업무실적 보고서]'+$now.format('yyyy-MM-dd')}}",
+        "message": "={{ $json.output[0].content[0].text\n    .replace(/^```html\\s*/i, '')\n    .replace(/```\\s*$/i, '') }}",
+        "options": {}
+      },
+      "id": "5162d374-38df-4d53-bbc3-3ca87da1c700",
+      "name": "Gmail_리포트발송",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1024,
+        -144
+      ],
+      "webhookId": "5aff7d9a-931d-4d74-9157-37c87c32c1fe",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "AV9UEfuMz0pwqDVJ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "당신은 팀 주간 업무실적을 분석하는 업무 성과 분석 전문가입니다.\n제공된 데이터만을 근거로 분석하고, 한국어로 작성하세요.\n최종 결과는 이메일 본문에 사용할 수 있도록 HTML 형식으로 작성하세요\n\n최종 결과는 HTML 태그만 출력하세요.\n```html 및 ``` 같은 Markdown 코드블록 표시는 절대 포함하지 마세요."
+            },
+            {
+              "content": "=아래는 이번 주 팀 업무실적 데이터입니다.\n\n다음 기준으로 분석하여 주간 업무실적 보고서를 작성해주세요.\n\n1. 전체 요약: 팀 전체 실적과 평균 완료율, 주요 특이사항\n2. 팀원별 요약: 각 팀원의 담당업무, 완료율, 주요 진행사항\n3. 잘된 점: 3가지\n4. 개선이 필요한 점: 2가지\n5. 다음 주 권장사항\n\n보고서는 HTML 형식으로 작성해주세요.\n<h2>, <ul>, <li>, <strong> 태그를 활용해 가독성 있게 작성해주세요.\n\n업무실적 데이터:\n{{ JSON.stringify($json.업무실적목록, null, 2) }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        -144
+      ],
+      "id": "a0a23be6-2ff4-4b76-bfe1-472c3555057c",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    }
+  ],
+  "connections": {
+    "매주 월요일 오전 9시": {
+      "main": [
+        [
+          {
+            "node": "구글시트_데이터읽기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "구글시트_데이터읽기": {
+      "main": [
+        [
+          {
+            "node": "데이터_하나로합치기",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "데이터_하나로합치기": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Gmail_리포트발송",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "25e8b4c37eab6a3daae5163c78d7b064282da4c37ad7eef7f8714cda8c2cf2df"
+  }
+}
